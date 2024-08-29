@@ -1,0 +1,47 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3.8.17-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    env_file:
+      - .env
+    networks:
+      - my_network  
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env 
+    volumes:
+      - ./entrypoint.sh:/entrypoint.sh
+    entrypoint: ["bash", "/entrypoint.sh"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - my_network
+
+  message_sender:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./run_messager.sh:/run_messager.sh
+    entrypoint: ["bash", "/run_messager.sh"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - my_network
+
+volumes:
+  rabbitmq_data:
+networks:
+  my_network:
+    driver: bridge
